@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE 數學 3D 幾何 13.0：教學測驗版</title>
+    <style>
+        :root {
+            --bg-color: #e2e8f0; 
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --border: #cbd5e1;
+            --text: #1e293b;
+            --accent: #2563eb; 
+            --warning: #d97706;
+            --red: #e11d48;   
+            --green: #16a34a; 
+            --black: #020617;
+            --active-glow: rgba(37, 99, 235, 0.35);
+        }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Noto Sans TC', sans-serif; background: var(--bg-color); color: var(--text); user-select: none; }
+        
+        #ui-panel {
+            position: absolute; top: 20px; left: 20px; width: 380px;
+            background: var(--panel-bg); border: 1px solid var(--border);
+            padding: 20px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            z-index: 100; backdrop-filter: blur(10px); max-height: 90vh; overflow-y: auto;
+        }
+
+        #ui-panel::-webkit-scrollbar { width: 6px; }
+        #ui-panel::-webkit-scrollbar-track { background: transparent; }
+        #ui-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        h1 { font-size: 20px; margin: 0 0 8px; color: var(--accent); font-weight: 900; }
+        .hint-text { font-size: 12px; color: #64748b; margin-bottom: 16px; border-bottom: 2px solid var(--border); padding-bottom: 10px; line-height: 1.5; }
+        
+        .section { margin-bottom: 18px; }
+        label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #475569; }
+        
+        select {
+            width: 100%; padding: 8px 10px; background: #f8fafc; border: 1px solid #94a3b8;
+            color: var(--text); border-radius: 6px; font-size: 14px; outline: none; transition: 0.2s; cursor: pointer; font-weight: 500;
+        }
+        select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--active-glow); }
+        
+        .select-group { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .select-btn {
+            background: #f1f5f9; border: 2px solid #cbd5e1; padding: 6px; border-radius: 8px; color: #64748b;
+            cursor: pointer; flex-shrink: 0; font-size: 16px; display: flex; align-items: center; justify-content: center; width: 40px; transition: 0.2s;
+        }
+        .select-btn:hover { background: #e2e8f0; }
+        .select-btn.active {
+            background: #eff6ff; color: var(--accent); border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--active-glow); animation: pulse 1.5s infinite; font-weight: bold;
+        }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--active-glow); } 70% { box-shadow: 0 0 0 6px rgba(37,99,235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235, 0); } }
+
+        #custom-geometry-ui { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #94a3b8; }
+        .custom-geo-controls { display: flex; gap: 4px; margin-top: 5px; }
+        .custom-geo-controls select { padding: 4px; font-size: 12px; text-align: center; }
+        #btn-add-custom { background: var(--accent); color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; flex-shrink: 0;}
+        #btn-add-custom:hover { background: #1d4ed8; }
+
+        .toggle-group { display: flex; flex-direction: column; gap: 8px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #94a3b8; }
+        .toggle-group label { display: flex; align-items: center; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 0; cursor: pointer; }
+        .toggle-group input[type="checkbox"] { margin-right: 10px; cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent); }
+
+        .data-display {
+            background: #f1f5f9; padding: 15px; border-radius: 8px;
+            margin-top: 15px; border-left: 5px solid var(--accent); border: 1px solid var(--border); min-height: 50px;
+        }
+        .angle-val { font-size: 30px; font-weight: 900; color: var(--accent); margin: 0;}
+        .angle-val.hidden { color: #94a3b8; font-style: italic; }
+        .error-msg { color: var(--red); font-size: 13px; font-weight: bold; line-height: 1.5;}
+        .warning-msg { color: var(--warning); font-size: 12px; font-weight: bold; margin-top: 8px; line-height: 1.4; display: block;}
+
+        #btn-best-view {
+            width: 100%; margin-top: 12px; padding: 10px; background: var(--accent);
+            color: #fff; font-size: 14px; font-weight: bold; border-radius: 8px;
+            border: none; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+            display: none; 
+        }
+        #btn-best-view:hover { background: #1d4ed8; box-shadow: 0 6px 16px rgba(37,99,235,0.35); transform: translateY(-1px); }
+
+        .legend { font-size: 12px; margin-top: 15px; color: #334155; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-weight: 500;}
+        .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+        .dot { width: 16px; height: 6px; border-radius: 3px; margin-right: 10px; }
+
+        #labels-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+        .vertex-label {
+            position: absolute; transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95); color: #0f172a;
+            font-weight: 900; font-size: 14px; padding: 3px 8px;
+            border-radius: 6px; border: 2px solid #94a3b8; font-family: monospace; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .angle-label-3d {
+            position: absolute; transform: translate(-50%, -50%);
+            background: #ffffff; color: var(--accent);
+            font-weight: 900; font-size: 20px; padding: 5px 12px;
+            border-radius: 8px; border: 3px solid var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            pointer-events: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px;
+            transition: 0.2s font-size, 0.2s padding;
+        }
+        #instruction { font-size: 13px; color: var(--accent); margin-top: 10px; font-weight: 800; display: none; padding-bottom: 5px;}
+    </style>
+</head>
+<body>
+
+<div id="ui-panel">
+    <h1>HKDSE 數學模擬器 13.0</h1>
+    <div class="hint-text">
+        🖱️ <b>左鍵</b>：旋轉視角<br>
+        🖱️ <b>右鍵</b>：上下左右平移 (Pan)<br>
+        🖱️ <b>滾輪</b>：縮放大小
+    </div>
+
+    <div class="section">
+        <label>1. 選擇幾何圖形 (Shape)</label>
+        <select id="shapeType">
+            <option value="cube">長方體 / 正方體 (Cuboid)</option>
+            <option value="pyramid">正四棱錐 (Right Pyramid)</option>
+            <option value="tetra">正四面體 (Tetrahedron)</option>
+            <option value="octa">正八面體 (Octahedron)</option>
+            <option value="hexPrism">正六角柱體 (Hexagonal Prism)</option>
+            <option value="prism">三稜柱 (Triangular Prism)</option>
+            <option value="dodeca">正十二面體 (Dodecahedron)</option>
+        </select>
+    </div>
+
+    <div id="custom-geometry-ui">
+        <label id="custom-geo-label" style="color: var(--accent);">🛠️ 自訂切面 (支援 3-4 點定面)</label>
+        <div class="custom-geo-controls">
+            <select id="cp-v1"></select><select id="cp-v2"></select>
+            <select id="cp-v3"></select><select id="cp-v4"></select>
+            <button id="btn-add-custom">新增平面</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <label>2. 計算模式 (Mode)</label>
+        <select id="measureMode">
+            <option value="plane-plane">兩平面夾角 (Angle between Planes)</option>
+            <option value="line-plane">線面夾角 (Angle between Line & Plane)</option>
+        </select>
+    </div>
+
+    <div class="section" id="plane-select-ui">
+        <label>3. 點擊按鈕啟動 3D 模型選取</label>
+        <div id="instruction-plane" style="font-size: 13px; color: var(--accent); font-weight: 800; padding-bottom: 5px; display: none;">👉 游標已變成十字，請點選第一塊平面</div>
+        <div class="select-group">
+            <button class="select-btn" id="btn-faceA" title="點擊以選取第一面">A</button>
+            <select id="faceA"></select>
+        </div>
+        <div class="select-group">
+            <button class="select-btn" id="btn-faceB" title="點擊以選取第二面">B</button>
+            <select id="faceB"></select>
+        </div>
+    </div>
+
+    <div class="section" id="line-select-ui" style="display:none;">
+        <label>3. 點擊按鈕啟動 3D 模型選取</label>
+        <div id="instruction-line" style="font-size: 13px; color: var(--accent); font-weight: 800; padding-bottom: 5px; display: none;">👉 游標已變成十字，請點選目標直線</div>
+        <div class="select-group">
+            <button class="select-btn" id="btn-targetLine" title="點擊以選取目標線">線</button>
+            <select id="targetLine"></select>
+        </div>
+        <div class="select-group">
+            <button class="select-btn" id="btn-targetFace" title="點擊以選取目標面">面</button>
+            <select id="targetFace"></select>
+        </div>
+    </div>
+
+    <div class="section">
+        <label>4. 教學測驗工具 (Display Options)</label>
+        <div class="toggle-group">
+            <label><input type="checkbox" id="toggle-intersection" checked> 顯示交線 / 投影線</label>
+            <label><input type="checkbox" id="toggle-perpendicular" checked> 顯示垂直線 / 高</label>
+            <label><input type="checkbox" id="toggle-angle" checked> 顯示夾角與度數</label>
+            <label><input type="checkbox" id="toggle-labels" checked> 顯示頂點字母標記</label>
+            
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+                <label style="font-size: 12px; color: #64748b; margin-bottom: 4px; display: block;">📐 角度弧線與字體大小</label>
+                <input type="range" id="angle-size-slider" min="0.3" max="1.2" step="0.1" value="1" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+            </div>
+        </div>
+    </div>
+
+    <div class="data-display" id="resDisplay"></div>
+    
+    <button id="btn-best-view">🎥 切換至最佳視角</button>
+
+    <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#38bdf8"></span> 選定面 A / 目標面</div>
+        <div class="legend-item"><span class="dot" style="background:#fbbf24"></span> 選定面 B / 目標線段</div>
+        <div class="legend-item"><span class="dot" style="background:var(--black);"></span> 實體交線 / 投影輔助線</div>
+        <div class="legend-item"><span class="dot" style="background:var(--red)"></span> 垂直線 / 垂直高</div>
+        <div class="legend-item"><span class="dot" style="background:var(--green)"></span> 夾角圓弧</div>
+    </div>
+</div>
+
+<div id="labels-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineSegmentsGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineMaterial.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineSegments2.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/Line2.js"></script>
+
+<script>
+    let scene, camera, renderer, controls, shapeGroup, hitGroup, extensionGroup;
+    let currentLabels = []; let angleLabelElement = null; let angleLabelPos = new THREE.Vector3(); 
+    let lastShapeId = null; 
+    let thickLineMaterials = []; 
+    
+    const raycaster = new THREE.Raycaster(); raycaster.params.Line.threshold = 1.5; 
+    const mouse = new THREE.Vector2(); 
+    
+    let activeSelectionTarget = null; 
+    let pointerDownPos = { x: 0, y: 0 }; 
+
+    let showIntersection = true;
+    let showPerpendicular = true;
+    let showAngle = true;
+
+    let bestView = { pos: new THREE.Vector3(), target: new THREE.Vector3(), active: false };
+    let isCameraAnimating = false;
+    let targetCameraPos = new THREE.Vector3();
+    let targetControlsCenter = new THREE.Vector3();
+
+    const hexV = [
+        new THREE.Vector3(2.5, -3, 0), new THREE.Vector3(1.25, -3, 2.165), new THREE.Vector3(-1.25, -3, 2.165),
+        new THREE.Vector3(-2.5, -3, 0), new THREE.Vector3(-1.25, -3, -2.165), new THREE.Vector3(1.25, -3, -2.165),
+        new THREE.Vector3(2.5, 3, 0), new THREE.Vector3(1.25, 3, 2.165), new THREE.Vector3(-1.25, 3, 2.165),
+        new THREE.Vector3(-2.5, 3, 0), new THREE.Vector3(-1.25, 3, -2.165), new THREE.Vector3(1.25, 3, -2.165)
+    ];
+
+    const shapes = {
+        cube: {
+            name: "長方體",
+            vertices: [
+                new THREE.Vector3(-2, 4, 2),  new THREE.Vector3(2, 4, 2),   new THREE.Vector3(2, 4, -2),  new THREE.Vector3(-2, 4, -2), 
+                new THREE.Vector3(-2, 0, 2),  new THREE.Vector3(2, 0, 2),   new THREE.Vector3(2, 0, -2),  new THREE.Vector3(-2, 0, -2)  
+            ],
+            labels: "ABCDEFGH".split(''),
+            faces: [
+                { name: "底面 EFGH", pts: [4,5,6,7], tris: [4,5,6, 4,6,7] }, { name: "頂面 ABCD", pts: [0,1,2,3], tris: [0,1,2, 0,2,3] },
+                { name: "前面 ABFE", pts: [0,1,5,4], tris: [0,1,5, 0,5,4] }, { name: "後面 DCGH", pts: [3,2,6,7], tris: [3,2,6, 3,6,7] },
+                { name: "右面 BCGF", pts: [1,2,6,5], tris: [1,2,6, 1,6,5] }, { name: "左面 ADHE", pts: [0,3,7,4], tris: [0,3,7, 0,7,4] }
+            ],
+            lines: []
+        },
+        pyramid: {
+            name: "正四棱錐", vertices: [ new THREE.Vector3(0, 4, 0), new THREE.Vector3(-2, 0, 2), new THREE.Vector3(2, 0, 2), new THREE.Vector3(2, 0, -2), new THREE.Vector3(-2, 0, -2) ], labels: "VABCD".split(''),
+            faces: [
+                { name: "底面 ABCD", pts: [1,2,3,4], tris: [1,2,3, 1,3,4] }, { name: "側面 VAB", pts: [0,1,2], tris: [0,1,2] },
+                { name: "側面 VBC", pts: [0,2,3], tris: [0,2,3] }, { name: "側面 VCD", pts: [0,3,4], tris: [0,3,4] }, { name: "側面 VDA", pts: [0,4,1], tris: [0,4,1] }
+            ],
+            lines: []
+        },
+        tetra: {
+            name: "正四面體", vertices: [ new THREE.Vector3(0, 3.26, 0), new THREE.Vector3(-2.3, 0, 1.33), new THREE.Vector3(2.3, 0, 1.33), new THREE.Vector3(0, 0, -2.66) ], labels: "VABC".split(''),
+            faces: [ { name: "底面 ABC", pts: [1,2,3], tris: [1,2,3] }, { name: "側面 VAB", pts: [0,1,2], tris: [0,1,2] }, { name: "側面 VBC", pts: [0,2,3], tris: [0,2,3] }, { name: "側面 VCA", pts: [0,3,1], tris: [0,3,1] } ],
+            lines: []
+        },
+        octa: {
+            name: "正八面體", vertices: [ new THREE.Vector3(0, 3, 0), new THREE.Vector3(-2, 0, 2), new THREE.Vector3(2, 0, 2), new THREE.Vector3(2, 0, -2), new THREE.Vector3(-2, 0, -2), new THREE.Vector3(0, -3, 0) ], labels: "VABCDW".split(''),
+            faces: [
+                { name: "上半面 VAB", pts: [0,1,2], tris: [0,1,2] }, { name: "上半面 VBC", pts: [0,2,3], tris: [0,2,3] }, { name: "上半面 VCD", pts: [0,3,4], tris: [0,3,4] }, { name: "上半面 VDA", pts: [0,4,1], tris: [0,4,1] },
+                { name: "下半面 WAB", pts: [5,2,1], tris: [5,2,1] }, { name: "下半面 WBC", pts: [5,3,2], tris: [5,3,2] }, { name: "下半面 WCD", pts: [5,4,3], tris: [5,4,3] }, { name: "下半面 WDA", pts: [5,1,4], tris: [5,1,4] }
+            ],
+            lines: []
+        },
+        hexPrism: {
+            name: "正六角柱體", vertices: hexV, labels: "ABCDEFGHIJKL".split(''),
+            faces: [
+                { name: "底面 ABCDEF", pts: [0,1,2,3,4,5], tris: [0,1,2, 0,2,3, 0,3,4, 0,4,5] }, { name: "頂面 GHIJKL", pts: [6,7,8,9,10,11], tris: [6,7,8, 6,8,9, 6,9,10, 6,10,11] },
+                { name: "側面 ABHG", pts: [0,1,7,6], tris: [0,1,7, 0,7,6] }, { name: "側面 BCIH", pts: [1,2,8,7], tris: [1,2,8, 1,8,7] },
+                { name: "側面 CDJI", pts: [2,3,9,8], tris: [2,3,9, 2,9,8] }, { name: "側面 DEKJ", pts: [3,4,10,9], tris: [3,4,10, 3,10,9] },
+                { name: "側面 EFLK", pts: [4,5,11,10], tris: [4,5,11, 4,11,10] }, { name: "側面 FAGL", pts: [5,0,6,11], tris: [5,0,6, 5,6,11] }
+            ],
+            lines: []
+        },
+        prism: {
+            name: "三稜柱", vertices: [ new THREE.Vector3(-2, 0, 2), new THREE.Vector3(2, 0, 2), new THREE.Vector3(0, 3, 2), new THREE.Vector3(-2, 0, -2), new THREE.Vector3(2, 0, -2), new THREE.Vector3(0, 3, -2) ], labels: "ABCDEF".split(''),
+            faces: [
+                { name: "底面 ABED", pts: [0,1,4,3], tris: [0,1,4, 0,4,3] }, { name: "前面 ABC", pts: [0,1,2], tris: [0,1,2] },
+                { name: "後面 DEF", pts: [3,4,5], tris: [3,4,5] }, { name: "右斜面 BCFE", pts: [1,2,5,4], tris: [1,2,5, 1,5,4] }, { name: "左斜面 ACFD", pts: [0,2,5,3], tris: [0,2,5, 0,5,3] }
+            ],
+            lines: []
+        }
+    };
+
+    function buildDodecahedron() {
+        const phi = (1 + Math.sqrt(5)) / 2; // 黃金比例
+        const ih = 1 / phi;
+        const s = 2.4; // 縮放係數
+        
+        // 精準的 20 個頂點座標
+        const pts = [
+            [1, 1, 1], [1, 1, -1], [1, -1, 1], [1, -1, -1],
+            [-1, 1, 1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
+            [0, ih, phi], [0, ih, -phi], [0, -ih, phi], [0, -ih, -phi],
+            [ih, phi, 0], [ih, -phi, 0], [-ih, phi, 0], [-ih, -phi, 0],
+            [phi, 0, ih], [phi, 0, -ih], [-phi, 0, ih], [-phi, 0, -ih]
+        ].map(p => new THREE.Vector3(p[0]*s, p[1]*s, p[2]*s));
+
+        // 完美對應的 12 個純粹五邊形面
+        const faceIndices = [
+            [0, 16, 2, 10, 8], [0, 8, 4, 14, 12], [0, 12, 1, 17, 16],
+            [1, 12, 14, 5, 9], [1, 9, 11, 3, 17], [2, 13, 15, 6, 10],
+            [2, 16, 17, 3, 13], [3, 11, 7, 15, 13], [4, 8, 10, 6, 18],
+            [4, 18, 19, 5, 14], [5, 19, 7, 11, 9], [6, 15, 7, 19, 18]
+        ];
+
+        let faces = faceIndices.map((fPts, i) => {
+            return {
+                name: `五邊形 ${i+1}`,
+                pts: fPts,
+                tris: [fPts[0], fPts[1], fPts[2],  fPts[0], fPts[2], fPts[3],  fPts[0], fPts[3], fPts[4]]
+            };
+        });
+
+        shapes.dodeca = {
+            name: "正十二面體",
+            vertices: pts,
+            labels: "ABCDEFGHIJKLMNOPQRST".split(""),
+            faces: faces,
+            lines: []
+        };
+    }
+
+    function init() {
+        buildDodecahedron(); 
+
+        for (const key in shapes) {
+            const shape = shapes[key];
+            const existingLines = new Set();
+            shape.lines.forEach(l => existingLines.add(`${Math.min(l.p1, l.p2)}-${Math.max(l.p1, l.p2)}`));
+            
+            for (let i = 0; i < shape.vertices.length; i++) {
+                for (let j = i + 1; j < shape.vertices.length; j++) {
+                    const lineKey = `${i}-${j}`;
+                    if (!existingLines.has(lineKey)) {
+                        shape.lines.push({ name: `線段 ${shape.labels[i]}${shape.labels[j]}`, p1: i, p2: j });
+                        existingLines.add(lineKey);
+                    }
+                }
+            }
+        }
+
+        scene = new THREE.Scene(); scene.background = new THREE.Color('#e2e8f0');
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000); camera.position.set(14, 12, 18);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        
+        controls = new THREE.OrbitControls(camera, renderer.domElement); 
+        controls.enableDamping = true; controls.enablePan = true; controls.screenSpacePanning = true; 
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7)); const dLight = new THREE.DirectionalLight(0xffffff, 0.6); dLight.position.set(5, 10, 7); scene.add(dLight);
+
+        shapeGroup = new THREE.Group(); scene.add(shapeGroup);
+        hitGroup = new THREE.Group(); scene.add(hitGroup);
+        extensionGroup = new THREE.Group(); scene.add(extensionGroup); 
+
+        angleLabelElement = document.createElement('div'); angleLabelElement.className = 'angle-label-3d'; angleLabelElement.style.display = 'none';
+        document.getElementById('labels-container').appendChild(angleLabelElement);
+
+        window.addEventListener('resize', onWindowResize); 
+        
+        window.addEventListener('pointerdown', e => { 
+            pointerDownPos = { x: e.clientX, y: e.clientY }; 
+            isCameraAnimating = false;
+        });
+        window.addEventListener('pointerup', onPointerUp); 
+        
+        document.getElementById('shapeType').addEventListener('change', () => { activeSelectionTarget = null; updateUI(); });
+        document.getElementById('measureMode').addEventListener('change', () => { activeSelectionTarget = null; updateUI(); });
+        
+        ['faceA', 'faceB', 'targetLine', 'targetFace'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => { activeSelectionTarget = null; renderScene(); updateBtnUI(); });
+            document.getElementById('btn-' + id).addEventListener('click', () => { activeSelectionTarget = (activeSelectionTarget === id) ? null : id; updateBtnUI(); });
+        });
+
+        document.getElementById('btn-add-custom').addEventListener('click', addCustomGeometry);
+
+        document.getElementById('toggle-intersection').addEventListener('change', (e) => { showIntersection = e.target.checked; renderScene(); });
+        document.getElementById('toggle-perpendicular').addEventListener('change', (e) => { showPerpendicular = e.target.checked; renderScene(); });
+        document.getElementById('toggle-angle').addEventListener('change', (e) => { showAngle = e.target.checked; renderScene(); });
+        document.getElementById('toggle-labels').addEventListener('change', () => { updateLabelsPosition(); });
+        document.getElementById('angle-size-slider').addEventListener('input', () => { renderScene(); });
+
+        document.getElementById('btn-best-view').addEventListener('click', () => {
+            if (bestView.active) {
+                targetCameraPos.copy(bestView.pos);
+                targetControlsCenter.copy(bestView.target);
+                isCameraAnimating = true; 
+            }
+        });
+
+        updateUI(); animate();
+    }
+
+    function addCustomGeometry() {
+        const mode = document.getElementById('measureMode').value;
+        const shape = shapes[document.getElementById('shapeType').value];
+        const resDisplay = document.getElementById('resDisplay');
+        
+        const v1 = parseInt(document.getElementById('cp-v1').value); 
+        const v2 = parseInt(document.getElementById('cp-v2').value);
+
+        if (mode === 'plane-plane') {
+            const v3 = document.getElementById('cp-v3').value; 
+            const v4 = document.getElementById('cp-v4').value;
+            
+            let pts = [v1, v2, parseInt(v3)]; 
+            if (v4 !== "") pts.push(parseInt(v4));
+            
+            if (new Set(pts).size !== pts.length) { resDisplay.innerHTML = '<span class="error-msg">⚠️ 錯誤：請選擇不重複的頂點！</span>'; return; }
+
+            const p1 = shape.vertices[pts[0]], p2 = shape.vertices[pts[1]], p3 = shape.vertices[pts[2]];
+
+            const normal = new THREE.Vector3().crossVectors(new THREE.Vector3().subVectors(p2, p1), new THREE.Vector3().subVectors(p3, p1));
+            if (normal.lengthSq() < 0.001) { resDisplay.innerHTML = '<span class="error-msg">⚠️ 錯誤：前三個點成一直線，無法構成平面。</span>'; return; }
+            normal.normalize();
+
+            let tris = [];
+            if (pts.length === 4) {
+                const p4 = shape.vertices[pts[3]];
+                if (Math.abs(normal.dot(new THREE.Vector3().subVectors(p4, p1))) > 0.05) { 
+                    resDisplay.innerHTML = '<span class="error-msg">⚠️ 幾何錯誤：選擇的 4 個頂點在空間中不共面。</span>'; return; 
+                }
+
+                let c = new THREE.Vector3().addVectors(p1, p2).add(p3).add(p4).multiplyScalar(0.25);
+                let u = new THREE.Vector3().subVectors(p1, c).normalize(); let v = new THREE.Vector3().crossVectors(normal, u).normalize();
+
+                pts.sort((a, b) => Math.atan2(new THREE.Vector3().subVectors(shape.vertices[a], c).dot(v), new THREE.Vector3().subVectors(shape.vertices[a], c).dot(u)) - Math.atan2(new THREE.Vector3().subVectors(shape.vertices[b], c).dot(v), new THREE.Vector3().subVectors(shape.vertices[b], c).dot(u)));
+                tris = [pts[0], pts[1], pts[2], pts[0], pts[2], pts[3]];
+            } else { tris = [pts[0], pts[1], pts[2]]; }
+
+            const name = `自訂面 ${pts.map(i => shape.labels[i]).join('')}`;
+            shape.faces.push({ name: name, pts: pts, tris: tris });
+            
+            updateUI(true); 
+            document.getElementById('faceA').value = shape.faces.length - 1; 
+            activeSelectionTarget = 'faceB'; // 選擇完自訂面後自動進入 B 面選取狀態
+            renderScene(); updateBtnUI();
+            document.getElementById('resDisplay').innerHTML = `<div style="font-size: 13px; font-weight: 600; color: #16a34a; margin-bottom: 5px;">✅ 成功建立：${name}</div>`;
+        } else {
+            if (v1 === v2) { resDisplay.innerHTML = '<span class="error-msg">⚠️ 錯誤：請選擇兩個不同的頂點來建立線段！</span>'; return; }
+            
+            const existingIndex = shape.lines.findIndex(l => (l.p1 === v1 && l.p2 === v2) || (l.p1 === v2 && l.p2 === v1));
+            
+            if (existingIndex !== -1) {
+                updateUI(true); 
+                document.getElementById('targetLine').value = existingIndex; 
+                activeSelectionTarget = 'targetFace'; // 自動進入面選取狀態
+                renderScene(); updateBtnUI();
+                document.getElementById('resDisplay').innerHTML = `<div style="font-size: 13px; font-weight: 600; color: #16a34a; margin-bottom: 5px;">✅ 切換至已有線段：${shape.lines[existingIndex].name}</div>`;
+            }
+        }
+    }
+
+    function onPointerUp(event) {
+        if (!activeSelectionTarget) return;
+        if (Math.hypot(event.clientX - pointerDownPos.x, event.clientY - pointerDownPos.y) > 5) return; 
+
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1; mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        
+        const mode = document.getElementById('measureMode').value;
+        const validHit = raycaster.intersectObjects(hitGroup.children).find(hit => hit.object.userData.type === (activeSelectionTarget === 'targetLine' ? 'line' : 'face'));
+        
+        if (validHit) {
+            const hitIndex = validHit.object.userData.index;
+            if (mode === 'plane-plane') {
+                if (activeSelectionTarget === 'faceA') {
+                    document.getElementById('faceA').value = hitIndex; 
+                    if (document.getElementById('faceB').value == hitIndex) document.getElementById('faceB').value = ""; // 防止選擇重複
+                    activeSelectionTarget = 'faceB'; // 選擇 A 後自動切換準備選擇 B
+                } else if (activeSelectionTarget === 'faceB') {
+                    if (hitIndex == document.getElementById('faceA').value) return; 
+                    else { document.getElementById('faceB').value = hitIndex; activeSelectionTarget = null; }
+                }
+            } else {
+                if (activeSelectionTarget === 'targetLine') { 
+                    document.getElementById('targetLine').value = hitIndex; 
+                    activeSelectionTarget = 'targetFace'; 
+                } else { 
+                    document.getElementById('targetFace').value = hitIndex; 
+                    activeSelectionTarget = null; 
+                }
+            }
+            updateBtnUI(); renderScene();
+        }
+    }
+
+    function updateBtnUI() { 
+        ['faceA', 'faceB', 'targetLine', 'targetFace'].forEach(id => { 
+            const btn = document.getElementById('btn-' + id);
+            if (activeSelectionTarget === id) btn.classList.add('active'); else btn.classList.remove('active');
+        }); 
+        
+        const mode = document.getElementById('measureMode').value;
+        const insPlane = document.getElementById('instruction-plane'); const insLine = document.getElementById('instruction-line');
+        
+        if (activeSelectionTarget) {
+            document.body.style.cursor = 'crosshair';
+            if (mode === 'plane-plane') { insPlane.style.display = 'block'; insPlane.innerText = activeSelectionTarget === 'faceA' ? "👉 游標已變成十字，請點擊選取【第一面】" : "👉 第一面已著色，請點擊選取【第二面】"; } 
+            else { insLine.style.display = 'block'; insLine.innerText = activeSelectionTarget === 'targetLine' ? "👉 游標已變成十字，請點擊選取【目標直線】" : "👉 線段已著色，請點擊選取【目標平面】"; }
+        } else {
+            document.body.style.cursor = 'default';
+            if(insPlane) insPlane.style.display = 'none'; if(insLine) insLine.style.display = 'none';
+        }
+    }
+
+    function initLabels(data) {
+        const container = document.getElementById('labels-container');
+        container.innerHTML = ''; container.appendChild(angleLabelElement); currentLabels = [];
+        data.vertices.forEach((v, idx) => {
+            const el = document.createElement('div'); el.className = 'vertex-label'; el.innerText = data.labels[idx];
+            container.appendChild(el); currentLabels.push({ element: el, pos: v });
+        });
+    }
+
+    function updateLabelsPosition() {
+        const showLabels = document.getElementById('toggle-labels').checked;
+        
+        currentLabels.forEach(label => {
+            if (!showLabels) { 
+                label.element.style.display = 'none'; 
+                return; 
+            }
+            const vector = label.pos.clone().project(camera);
+            if (vector.z > 1) { label.element.style.display = 'none'; return; }
+            label.element.style.display = 'block'; 
+            label.element.style.left = (vector.x * .5 + .5) * window.innerWidth + 'px'; 
+            label.element.style.top = (vector.y * -.5 + .5) * window.innerHeight + 'px';
+        });
+        
+        if (angleLabelElement.style.display === 'block') {
+            const vector = angleLabelPos.clone().project(camera);
+            if (vector.z > 1) { angleLabelElement.style.opacity = '0'; return; }
+            angleLabelElement.style.opacity = '1';
+            angleLabelElement.style.left = (vector.x * .5 + .5) * window.innerWidth + 'px'; 
+            angleLabelElement.style.top = (vector.y * -.5 + .5) * window.innerHeight + 'px';
+        }
+    }
+
+    function updateUI(forceRefresh = false) {
+        const shapeId = document.getElementById('shapeType').value; const shape = shapes[shapeId]; const mode = document.getElementById('measureMode').value;
+        
+        const customLabel = document.getElementById('custom-geo-label');
+        const v3 = document.getElementById('cp-v3');
+        const v4 = document.getElementById('cp-v4');
+        const btnAdd = document.getElementById('btn-add-custom');
+
+        if (mode === 'plane-plane') {
+            customLabel.innerText = "🛠️ 自訂切面 (支援 3-4 點定面)";
+            v3.style.display = "inline-block";
+            v4.style.display = "inline-block";
+            btnAdd.innerText = "新增平面";
+        } else {
+            customLabel.innerText = "🛠️ 自訂線段 (找線助手)";
+            v3.style.display = "none";
+            v4.style.display = "none";
+            btnAdd.innerText = "切換至線段";
+        }
+
+        if (lastShapeId !== shapeId || forceRefresh) {
+            ['cp-v1', 'cp-v2', 'cp-v3', 'cp-v4'].forEach(id => {
+                const sel = document.getElementById(id); sel.innerHTML = ""; if (id === 'cp-v4') sel.add(new Option("(無)", ""));
+                shape.labels.forEach((l, i) => sel.add(new Option(l, i)));
+            });
+            if(shape.labels.length >= 3) { document.getElementById('cp-v1').value = 0; document.getElementById('cp-v2').value = 1; document.getElementById('cp-v3').value = 2; }
+            if(!forceRefresh) lastShapeId = shapeId;
+        }
+
+        const fA = document.getElementById('faceA'); const fB = document.getElementById('faceB'); const tL = document.getElementById('targetLine'); const tF = document.getElementById('targetFace');
+        const oldFa = fA.value, oldFb = fB.value, oldTl = tL.value, oldTf = tF.value; fA.innerHTML = fB.innerHTML = tL.innerHTML = tF.innerHTML = "";
+
+        // 加入預設的空白選項
+        fA.add(new Option("--- 請選擇第一面 ---", ""));
+        fB.add(new Option("--- 請選擇第二面 ---", ""));
+        tL.add(new Option("--- 請選擇目標線 ---", ""));
+        tF.add(new Option("--- 請選擇目標面 ---", ""));
+
+        shape.faces.forEach((f, i) => { fA.add(new Option(f.name, i)); fB.add(new Option(f.name, i)); tF.add(new Option(f.name, i)); });
+        shape.lines.forEach((l, i) => { tL.add(new Option(l.name, i)); });
+
+        // 取消了預設的「0」和「1」選取，改為空值
+        fA.value = (oldFa !== "" && parseInt(oldFa) < shape.faces.length) ? oldFa : "";
+        fB.value = (oldFb !== "" && parseInt(oldFb) < shape.faces.length && oldFb !== fA.value) ? oldFb : "";
+        tL.value = (oldTl !== "" && parseInt(oldTl) < shape.lines.length) ? oldTl : "";
+        tF.value = (oldTf !== "" && parseInt(oldTf) < shape.faces.length) ? oldTf : "";
+
+        // 如果是空白狀態，自動觸發選取模式 (讓游標直接變成十字，免點按鈕)
+        if (!forceRefresh && activeSelectionTarget === null) {
+            if (mode === 'plane-plane') {
+                if (fA.value === "") activeSelectionTarget = 'faceA';
+                else if (fB.value === "") activeSelectionTarget = 'faceB';
+            } else {
+                if (tL.value === "") activeSelectionTarget = 'targetLine';
+                else if (tF.value === "") activeSelectionTarget = 'targetFace';
+            }
+        }
+
+        document.getElementById('plane-select-ui').style.display = (mode === 'plane-plane') ? 'block' : 'none';
+        document.getElementById('line-select-ui').style.display = (mode === 'line-plane') ? 'block' : 'none';
+        
+        updateBtnUI(); initLabels(shape); renderScene();
+    }
+
+    function renderScene() {
+        shapeGroup.clear(); hitGroup.clear(); extensionGroup.clear(); angleLabelElement.style.display = 'none'; 
+        thickLineMaterials = []; 
+        const shapeData = shapes[document.getElementById('shapeType').value]; const mode = document.getElementById('measureMode').value;
+        const resDisplay = document.getElementById('resDisplay'); 
+        const btnBestView = document.getElementById('btn-best-view');
+        
+        btnBestView.style.display = 'none';
+        bestView.active = false;
+
+        let successMsg = "";
+        if(resDisplay.innerHTML.includes('✅')) {
+            const match = resDisplay.innerHTML.match(/<div[^>]*>✅.*?<\/div>/);
+            if (match) successMsg = match[0];
+        }
+
+        resDisplay.innerHTML = successMsg + '<div style="font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 5px;">計算結果：</div>';
+
+        drawWireframeAndHitboxes(shapeData);
+        
+        // 渲染邏輯重構：單面即時著色，雙面選滿才計算
+        if (mode === 'plane-plane') {
+            const vA = document.getElementById('faceA').value;
+            const vB = document.getElementById('faceB').value;
+
+            // 即時單面著色：有選的就會亮起
+            if (vA !== "") highlightFace(shapeData.faces[vA], 0x38bdf8, 0.4);
+            if (vB !== "") highlightFace(shapeData.faces[vB], 0xfbbf24, 0.4);
+
+            if (vA !== "" && vB !== "") {
+                // 兩面都選了才啟動數學計算與輔助線
+                calculatePlaneAngle(shapeData, parseInt(vA), parseInt(vB), resDisplay);
+            } else {
+                resDisplay.innerHTML += '<div style="color: #64748b; font-size: 13px; font-weight: 600; padding-top: 5px;">👉 尚待選擇... (請在 3D 模型上點選兩個平面)</div>';
+            }
+        } else {
+            const vTL = document.getElementById('targetLine').value;
+            const vTF = document.getElementById('targetFace').value;
+
+            if (vTL !== "") {
+                const line = shapeData.lines[vTL];
+                drawThickLine2D(shapeData.vertices[line.p1], shapeData.vertices[line.p2], 0xfbbf24, 8);
+            }
+            if (vTF !== "") {
+                highlightFace(shapeData.faces[vTF], 0x38bdf8, 0.3);
+            }
+
+            if (vTL !== "" && vTF !== "") {
+                calculateLinePlaneAngle(shapeData, parseInt(vTL), parseInt(vTF), resDisplay);
+            } else {
+                resDisplay.innerHTML += '<div style="color: #64748b; font-size: 13px; font-weight: 600; padding-top: 5px;">👉 尚待選擇... (請在 3D 模型上點選線段與平面)</div>';
+            }
+        }
+    }
+
+    function drawWireframeAndHitboxes(data) {
+        data.vertices.forEach(v => { const dot = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshBasicMaterial({color: 0x64748b})); dot.position.copy(v); shapeGroup.add(dot); });
+        data.faces.forEach((f, idx) => {
+            const geom = new THREE.BufferGeometry().setFromPoints(f.tris.map(i => data.vertices[i])); geom.computeVertexNormals();
+            shapeGroup.add(new THREE.Mesh(geom, new THREE.MeshLambertMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false })));
+            shapeGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom), new THREE.LineBasicMaterial({ color: 0x94a3b8, linewidth: 1 })));
+            const hitMesh = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })); hitMesh.userData = { type: 'face', index: idx }; hitGroup.add(hitMesh);
+        });
+        
+        data.lines.forEach((l, idx) => {
+            const hitLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([data.vertices[l.p1], data.vertices[l.p2]]), new THREE.LineBasicMaterial({ visible: false }));
+            hitLine.userData = { type: 'line', index: idx }; hitGroup.add(hitLine);
+        });
+    }
+
+    function drawThickLine2D(v1, v2, colorHex, pixelWidth) {
+        if (v1.distanceTo(v2) < 0.001) return;
+        const geom = new THREE.LineGeometry(); geom.setPositions([v1.x, v1.y, v1.z, v2.x, v2.y, v2.z]);
+        const mat = new THREE.LineMaterial({ color: colorHex, linewidth: pixelWidth, resolution: new THREE.Vector2(window.innerWidth, window.innerHeight) });
+        shapeGroup.add(new THREE.Line2(geom, mat)); thickLineMaterials.push(mat);
+    }
+
+    function drawThickArc2D(center, v1, v2, baseRadius, pixelWidth, angleStr) {
+        const angleScale = parseFloat(document.getElementById('angle-size-slider').value) || 1;
+        const scaledRadius = baseRadius * angleScale;
+
+        const angleRad = v1.angleTo(v2); let axis = new THREE.Vector3().crossVectors(v1, v2).normalize(); if (axis.lengthSq() < 0.001) axis.set(0, 1, 0); 
+        const curve = new THREE.EllipseCurve(0, 0, scaledRadius, scaledRadius, 0, angleRad, false, 0);
+        const vec3s = curve.getPoints(32).map(p => new THREE.Vector3(p.x, p.y, 0));
+        const matrix = new THREE.Matrix4().makeBasis(v1.clone().normalize(), new THREE.Vector3().crossVectors(axis, v1).normalize(), axis);
+        
+        const positions = []; vec3s.forEach(p => { p.applyMatrix4(matrix).add(center); positions.push(p.x, p.y, p.z); });
+
+        const geom = new THREE.LineGeometry(); geom.setPositions(positions);
+        const mat = new THREE.LineMaterial({ color: 0x16a34a, linewidth: pixelWidth, resolution: new THREE.Vector2(window.innerWidth, window.innerHeight) });
+        shapeGroup.add(new THREE.Line2(geom, mat)); thickLineMaterials.push(mat);
+
+        angleLabelPos = v1.clone().applyAxisAngle(axis, angleRad / 2).multiplyScalar(scaledRadius * 1.3).add(center); 
+        angleLabelElement.innerText = angleStr; 
+        angleLabelElement.style.fontSize = (20 * angleScale) + 'px';
+        angleLabelElement.style.padding = (5 * angleScale) + 'px ' + (12 * angleScale) + 'px';
+        angleLabelElement.style.display = 'block';
+    }
+
+    function highlightFace(face, color, op) {
+        const geom = new THREE.BufferGeometry().setFromPoints(face.tris.map(i => shapes[document.getElementById('shapeType').value].vertices[i])); geom.computeVertexNormals();
+        shapeGroup.add(new THREE.Mesh(geom, new THREE.MeshBasicMaterial({color: color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false})));
+    }
+
+    function renderPolygonExtension(planeNormal, facePtsIdx, P0, dirLine, colorCode, data) {
+        let pts = facePtsIdx.map(i => data.vertices[i].clone());
+        let tMin = Infinity, tMax = -Infinity;
+        pts.forEach(p => { let t = p.clone().sub(P0).dot(dirLine); tMin = Math.min(tMin, t); tMax = Math.max(tMax, t); });
+        
+        pts.push(P0.clone().addScaledVector(dirLine, tMin - 2.5), P0.clone().addScaledVector(dirLine, tMax + 2.5)); 
+        let c = new THREE.Vector3(); pts.forEach(p => c.add(p)); c.divideScalar(pts.length);
+        let u = pts[0].clone().sub(c).normalize(); let v = new THREE.Vector3().crossVectors(planeNormal, u).normalize();
+
+        let pts2d = pts.map(p => ({ p: p, x: p.clone().sub(c).dot(u), y: p.clone().sub(c).dot(v) }));
+        
+        pts2d.sort((a, b) => Math.abs(a.x - b.x) < 1e-6 ? a.y - b.y : a.x - b.x);
+
+        const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+        let lower = [];
+        for (let pt of pts2d) {
+            while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], pt) <= 0) lower.pop();
+            lower.push(pt);
+        }
+        let upper = [];
+        for (let i = pts2d.length - 1; i >= 0; i--) {
+            let pt = pts2d[i];
+            while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], pt) <= 0) upper.pop();
+            upper.push(pt);
+        }
+        upper.pop(); lower.pop();
+
+        let hullPts = lower.concat(upper).map(item => item.p);
+
+        let vertices = [];
+        if (hullPts.length >= 3) {
+            for(let i = 1; i < hullPts.length - 1; i++) { 
+                vertices.push(
+                    hullPts[0].x, hullPts[0].y, hullPts[0].z, 
+                    hullPts[i].x, hullPts[i].y, hullPts[i].z, 
+                    hullPts[i+1].x, hullPts[i+1].y, hullPts[i+1].z
+                ); 
+            }
+        }
+        
+        let geom = new THREE.BufferGeometry(); geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3)); geom.computeVertexNormals();
+
+        extensionGroup.add(new THREE.Mesh(geom, new THREE.MeshLambertMaterial({ color: colorCode, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false })));
+        extensionGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom), new THREE.LineBasicMaterial({ color: colorCode, transparent: true, opacity: 0.8 })));
+    }
+
+    function calculatePlaneAngle(data, ia, ib, resDisplay) {
+        if(ia === ib) { resDisplay.innerHTML += '<span class="error-msg">⚠️ 請選擇不同的平面</span>'; return; }
+        const faceA = data.faces[ia]; const faceB = data.faces[ib];
+
+        const getNC = (face) => {
+            const v0 = data.vertices[face.pts[0]]; const v1 = data.vertices[face.pts[1]]; const v2 = data.vertices[face.pts[2]];
+            const normal = new THREE.Vector3().crossVectors(new THREE.Vector3().subVectors(v1, v0), new THREE.Vector3().subVectors(v2, v0)).normalize();
+            const centroid = new THREE.Vector3(); face.pts.forEach(i => centroid.add(data.vertices[i])); centroid.divideScalar(face.pts.length);
+            return { normal, centroid };
+        };
+
+        const { normal: nA, centroid: cA } = getNC(faceA); const { normal: nB, centroid: cB } = getNC(faceB);
+        const dirLine = new THREE.Vector3().crossVectors(nA, nB); const uSq = dirLine.lengthSq();
+
+        if (uSq < 1e-6) { resDisplay.innerHTML += '<span class="error-msg">⚠️ 此兩面平行或重合 (夾角為 0° 或 180°)</span>'; return; }
+
+        const common = faceA.pts.filter(i => faceB.pts.includes(i));
+        let P0 = new THREE.Vector3(); let isExtended = false;
+
+        if (common.length >= 2) {
+            P0.addVectors(data.vertices[common[0]], data.vertices[common[1]]).multiplyScalar(0.5);
+            if (showIntersection) {
+                drawThickLine2D(data.vertices[common[0]], data.vertices[common[1]], 0x020617, 8); 
+            }
+        } else {
+            isExtended = true;
+            const planeA = new THREE.Plane().setFromNormalAndCoplanarPoint(nA, data.vertices[faceA.pts[0]]);
+            const planeB = new THREE.Plane().setFromNormalAndCoplanarPoint(nB, data.vertices[faceB.pts[0]]);
+            P0.addVectors(new THREE.Vector3().crossVectors(nB, dirLine).multiplyScalar(-planeA.constant), new THREE.Vector3().crossVectors(dirLine, nA).multiplyScalar(-planeB.constant)).divideScalar(uSq); 
+            dirLine.normalize(); const cMid = new THREE.Vector3().addVectors(cA, cB).multiplyScalar(0.5);
+            P0.add(dirLine.clone().multiplyScalar(cMid.clone().sub(P0).dot(dirLine)));
+
+            if (showIntersection) {
+                renderPolygonExtension(nA, faceA.pts, P0, dirLine, 0x38bdf8, data); 
+                renderPolygonExtension(nB, faceB.pts, P0, dirLine, 0xfbbf24, data); 
+                
+                let tMin = Infinity, tMax = -Infinity;
+                faceA.pts.concat(faceB.pts).forEach(idx => {
+                    let t = new THREE.Vector3().subVectors(data.vertices[idx], P0).dot(dirLine);
+                    tMin = Math.min(tMin, t);
+                    tMax = Math.max(tMax, t);
+                });
+                drawThickLine2D(P0.clone().addScaledVector(dirLine, tMin - 2.5), P0.clone().addScaledVector(dirLine, tMax + 2.5), 0x334155, 5); 
+            }
+        }
+
+        dirLine.normalize();
+        let perpA = new THREE.Vector3().crossVectors(dirLine, nA).normalize(); if (perpA.dot(new THREE.Vector3().subVectors(cA, P0)) < 0) perpA.negate();
+        let perpB = new THREE.Vector3().crossVectors(dirLine, nB).normalize(); if (perpB.dot(new THREE.Vector3().subVectors(cB, P0)) < 0) perpB.negate();
+
+        if (showPerpendicular) {
+            drawThickLine2D(P0, P0.clone().addScaledVector(perpA, 3.5), 0xe11d48, 6); 
+            drawThickLine2D(P0, P0.clone().addScaledVector(perpB, 3.5), 0xe11d48, 6);
+        }
+
+        let angle = perpA.angleTo(perpB) * (180/Math.PI); if (angle > 180) angle = 360 - angle;
+        let angleStr = angle.toFixed(1) + "°";
+        
+        let htmlResult = `<div class="angle-val ${showAngle ? '' : 'hidden'}">${showAngle ? angleStr : '???°'}</div>`;
+        if (isExtended && showIntersection) htmlResult += `<div class="warning-msg">🦚 啟動多邊形拉伸：<br>虛擬平面已沿著原邊界向外交匯延伸。</div>`;
+        resDisplay.innerHTML += htmlResult;
+
+        if (showAngle) {
+            drawThickArc2D(P0, perpA, perpB, 1.8, 6, angleStr); 
+        } else {
+            angleLabelElement.style.display = 'none';
+        }
+
+        bestView.active = true;
+        let camDir = dirLine.clone().normalize(); 
+        if (camDir.lengthSq() < 0.001) camDir.set(0, 1, 0);
+        if (camDir.dot(new THREE.Vector3().subVectors(camera.position, P0)) < 0) camDir.negate();
+        bestView.pos.copy(P0).add(camDir.multiplyScalar(20)); 
+        bestView.target.copy(P0);
+        document.getElementById('btn-best-view').style.display = 'block';
+    }
+
+    function calculateLinePlaneAngle(data, il, iface, resDisplay) {
+        const line = data.lines[il]; const face = data.faces[iface]; 
+        const p1 = data.vertices[line.p1]; const p2 = data.vertices[line.p2]; 
+        
+        const normal = new THREE.Vector3().crossVectors(
+            new THREE.Vector3().subVectors(data.vertices[face.pts[1]], data.vertices[face.pts[0]]), 
+            new THREE.Vector3().subVectors(data.vertices[face.pts[2]], data.vertices[face.pts[0]])
+        ).normalize();
+        const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, data.vertices[face.pts[0]]);
+        
+        const lineDir = new THREE.Vector3().subVectors(p2, p1).normalize();
+        const normalDotDir = plane.normal.dot(lineDir);
+        let origin = new THREE.Vector3();
+        let isParallel = Math.abs(normalDotDir) < 1e-5;
+
+        if (!isParallel) {
+            const t = -plane.distanceToPoint(p1) / normalDotDir;
+            origin.copy(p1).add(lineDir.clone().multiplyScalar(t));
+        } else {
+            origin.copy(p1);
+        }
+
+        let vLine = lineDir.clone();
+        let vecProj = vLine.clone().projectOnPlane(plane.normal).normalize();
+        
+        if (vLine.dot(vecProj) < 0) vLine.negate();
+
+        let dist1 = new THREE.Vector3().subVectors(p1, origin).dot(vLine);
+        let dist2 = new THREE.Vector3().subVectors(p2, origin).dot(vLine);
+        let tMax = Math.max(dist1, dist2, 0) + 2.5; 
+        let tMin = Math.min(dist1, dist2, 0) - 2.5;
+
+        if (showIntersection) {
+            drawThickLine2D(origin.clone().addScaledVector(vLine, tMax), origin.clone().addScaledVector(vLine, tMin), 0xfbbf24, 8); 
+            if (vecProj.lengthSq() > 0.0001) {
+                drawThickLine2D(origin.clone().addScaledVector(vecProj, tMax), origin.clone().addScaledVector(vecProj, tMin), 0x16a34a, 6); 
+            }
+        }
+
+        if (showPerpendicular && vecProj.lengthSq() > 0.0001) {
+            let dropPtT = (Math.abs(dist1) > Math.abs(dist2)) ? dist1 : dist2;
+            if (Math.abs(dropPtT) < 0.1) dropPtT = 3.5; 
+            
+            let dropPt = origin.clone().addScaledVector(vLine, dropPtT);
+            let projDropPt = new THREE.Vector3();
+            plane.projectPoint(dropPt, projDropPt);
+            drawThickLine2D(dropPt, projDropPt, 0xe11d48, 6); 
+        }
+
+        if (vecProj.lengthSq() < 0.0001) { 
+            resDisplay.innerHTML += `<div class="angle-val ${showAngle ? '' : 'hidden'}">${showAngle ? '90.0°' : '???°'}</div>`; 
+            angleLabelElement.style.display = 'none';
+            
+            bestView.active = true;
+            let camDir = vLine.clone();
+            if (camDir.dot(new THREE.Vector3().subVectors(camera.position, origin)) < 0) camDir.negate();
+            bestView.pos.copy(origin).add(camDir.multiplyScalar(20));
+            bestView.target.copy(origin);
+            document.getElementById('btn-best-view').style.display = 'block';
+        } else {
+            let angle = vLine.angleTo(vecProj) * (180/Math.PI);
+            const angleStr = angle.toFixed(1) + "°"; 
+            resDisplay.innerHTML += `<div class="angle-val ${showAngle ? '' : 'hidden'}">${showAngle ? angleStr : '???°'}</div>`;
+            
+            if (showAngle) {
+                drawThickArc2D(origin, vLine, vecProj, 1.8, 6, angleStr); 
+            } else {
+                angleLabelElement.style.display = 'none';
+            }
+
+            bestView.active = true;
+            let camDir = vLine.clone().cross(vecProj).normalize(); 
+            if (camDir.lengthSq() < 0.001) camDir.set(0, 1, 0);
+            if (camDir.dot(new THREE.Vector3().subVectors(camera.position, origin)) < 0) camDir.negate();
+            bestView.pos.copy(origin).add(camDir.multiplyScalar(20));
+            bestView.target.copy(origin);
+            document.getElementById('btn-best-view').style.display = 'block';
+        }
+    }
+
+    function onWindowResize() { 
+        camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); 
+        thickLineMaterials.forEach(mat => mat.resolution.set(window.innerWidth, window.innerHeight));
+        updateLabelsPosition(); 
+    }
+
+    function animate() { 
+        requestAnimationFrame(animate); 
+        
+        if (isCameraAnimating) {
+            camera.position.lerp(targetCameraPos, 0.08); 
+            controls.target.lerp(targetControlsCenter, 0.08);
+            if (camera.position.distanceTo(targetCameraPos) < 0.1 && controls.target.distanceTo(targetControlsCenter) < 0.1) {
+                isCameraAnimating = false; 
+            }
+        }
+
+        controls.update(); 
+        renderer.render(scene, camera); 
+        updateLabelsPosition(); 
+    }
+
+    init();
+</script>
+</body>
+</html>
